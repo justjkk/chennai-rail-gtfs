@@ -10,6 +10,6 @@ CREATE TABLE gtfs.calendar
 		friday	integer NOT NULL CHECK(friday IN (0,1)),
 		saturday	integer NOT NULL CHECK(saturday IN (0,1)),
 		sunday	integer NOT NULL CHECK(sunday IN (0,1)),
-		start_date	text NOT NULL,
-		end_date	text NOT NULL
+		start_date	text NOT NULL CHECK(start_date ~ '^[0-9]{8}$'),
+		end_date	text NOT NULL CHECK(end_date ~ '^[0-9]{8}$')
 );
