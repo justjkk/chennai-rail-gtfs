@@ -15,4 +15,4 @@ DELETE FROM gtfs.trips;
 \copy stop_times2 FROM 'stoptimes2.csv' WITH CSV HEADER
 
 INSERT INTO gtfs.stop_times(trip_id, arrival_time, departure_time, stop_id, stop_sequence)
-SELECT st.trip_id, st.arrival_time, st.departure_time, s.stop_id, st.stop_sequence FROM stop_times2 st, gtfs.stops s where st.stop_name = s.stop_name;
+SELECT st.trip_id, st.arrival_time, st.departure_time, s.stop_id, st.stop_sequence FROM stop_times2 st left outer join gtfs.stops s on st.stop_name = s.stop_name;

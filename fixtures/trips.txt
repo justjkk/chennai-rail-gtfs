@@ -1,5 +1,4 @@
 route_id,service_id,trip_id,trip_headsign,trip_short_name,direction_id,block_id,shape_id
-MSB-TBM,SUN,T79SUN,To Tambaram,T79,0,,
 MSB-VLCY,SUN,BVL1SUN,To Velachery,BVL1,0,,
 MSB-VLCY,SUN,BVL3SUN,To Velachery,BVL3,0,,
 MSB-VLCY,SUN,BVL5SUN,To Velachery,BVL5,0,,
@@ -293,6 +292,7 @@ MSB-TBM,SUN,T73SUN,To Tambaram,T73,0,,
 MSB-TBM,SUN,T75SUN,To Tambaram,T75,0,,
 MSB-TBM,SUN,BC41SUN,To Tambaram,BC41,0,,
 MSB-TBM,SUN,T77SUN,To Tambaram,T77,0,,
+MSB-TBM,SUN,T79SUN,To Tambaram,T79,0,,
 MSB-TBM,SUN,BC43SUN,To Tambaram,BC43,0,,
 MSB-TBM,SUN,T81SUN,To Tambaram,T81,0,,
 MSB-TBM,SUN,BC45SUN,To Tambaram,BC45,0,,

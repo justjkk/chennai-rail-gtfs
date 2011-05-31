@@ -15,6 +15,12 @@ def fmttime(uftime):
     '07:23:00'
     >>> fmttime("8")
     '08:00:00'
+
+    To avoid Time travels, time less than 3AM are considered second day's
+    >>> fmttime("0:54")
+    '24:54:00'
+    >>> fmttime("2.59")
+    '26:59:00'
     """
     timestr = str(uftime)
     try:
@@ -33,6 +39,8 @@ def fmttime(uftime):
         sys.stderr.write("Unrecognised time format: '%s'\n" % timestr)
         sys.stderr.write("Error was: '%s'\n" % e)
         raise
+    if hour < 3:
+        hour += 24
     return "%02d:%02d:00" % (hour, minute)
 
 def unpack(filename):
