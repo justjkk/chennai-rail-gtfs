@@ -37,49 +37,71 @@ def fmttime(uftime):
 
 def unpack(filename):
     """
-    Unpack Stop x Train Time matrix into Relational table format
-    input: service id, train number, stop time matrix...
-    output: trip id, service id, trip short name, stop name, time, sequence
+    Unpack [ Stop name x Trip short name ] Timetable into Relational table format
+    Output: trip csv and stop_times csv
     """
 
-    STOP_COLUMNS_OFFSET = 2
     with open(filename + '.csv', 'r') as f:
         fr = csv.reader(f)
         for row in fr:
-            stop_names = row[STOP_COLUMNS_OFFSET:]
+            stop_names = [x for x in row[1:] if x != None and x != ""]
             break
 
     incsv = csv.DictReader(open(filename + '.csv', 'r'))
 
-    outcols = [
-        "trip_id", "service_id", "trip_short_name",
-        "stop_name", "time", "sequence"
-    ]
+    route_id, service_id, direction_id  = filename.split('.')[0].split('_') #Eg: filename = 'msb-vlcy_sun_0'
+    route_id = route_id.upper()
+    service_id = service_id.upper()
+    direction_id = int(direction_id)
 
-    outcsv = csv.DictWriter(open(filename + '_unpacked.csv', 'w'), outcols)
-    outcsv.writerow(dict([(x,x) for x in outcols])) # workaround for DictWriter.writeheader() function
+    for row in incsv:
+        trips.append({
+            "route_id": route_id,
+            "service_id": service_id,
+            "trip_id": row["Train Nos."] + service_id,
+            "trip_headsign": "To " + [x for x in stop_names if row[x] != ""][-1],
+            "trip_short_name": row["Train Nos."],
+            "direction_id": direction_id,
+            "block_id": None,
+            "shape_id" : None
+        })
 
-    for trip in incsv:
         sequence = 0
         for stop_name in stop_names:
             sequence += 1
-            if trip[stop_name] == None or trip[stop_name] == "":
+            if row[stop_name] == "":
                 continue
-            outcsv.writerows([{
-                "trip_id":trip["Train Nos."] + trip["Service Id"],
-                "service_id":trip["Service Id"],
-                "trip_short_name": trip["Train Nos."],
+            stop_times.append({
+                "trip_id": row["Train Nos."] + service_id,
+                "arrival_time": fmttime(row[stop_name]),
+                "departure_time": fmttime(row[stop_name]),
                 "stop_name": stop_name,
-                "sequence": sequence,
-                "time": fmttime(trip[stop_name])
-            }])
+                "stop_sequence": sequence
+            })
 
 if __name__ == "__main__":
-    unpack('mrts_sun_bvl')
-    unpack('mrts_sun_vlb')
-    unpack('mrts_wds_bvl')
-    unpack('mrts_wds_vlb')
-    unpack('csr_sun_msb-tbm')
-    unpack('csr_sun_tbm-msb')
-    unpack('csr_wds_msb-tbm')
-    unpack('csr_wds_tbm-msb')
+    trips = []
+    stop_times = []
+
+    stcols = [
+        "trip_id", "arrival_time", "departure_time", "stop_name", "stop_sequence"
+    ]
+
+    tripcols = [
+        "route_id", "service_id", "trip_id", "trip_headsign", "trip_short_name", "direction_id", "block_id", "shape_id"
+    ]
+
+    stcsv = csv.DictWriter(open('stoptimes2.csv', 'w'), stcols)
+    stcsv.writerow(dict([(x,x) for x in stcols])) # workaround for DictWriter.writeheader() function
+    tripcsv = csv.DictWriter(open('trips.csv', 'w'), tripcols)
+    tripcsv.writerow(dict([(x,x) for x in tripcols]))
+    unpack('msb-vlcy_sun_0')
+    unpack('msb-vlcy_sun_1')
+    unpack('msb-vlcy_wds_0')
+    unpack('msb-vlcy_wds_1')
+    unpack('msb-tbm_sun_0')
+    unpack('msb-tbm_sun_1')
+    unpack('msb-tbm_wds_0')
+    unpack('msb-tbm_wds_1')
+    tripcsv.writerows(trips)
+    stcsv.writerows(stop_times)
