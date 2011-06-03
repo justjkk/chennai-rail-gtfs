@@ -63,33 +63,58 @@ def unpack(filename):
     direction_id = int(direction_id)
 
     for row in incsv:
-        trips.append({
-            "route_id": route_id,
+        trip_id = row["Train Nos."].strip() + service_id
+        if trip_id in trips:
+            existing_route_id = trips[trip_id]["route_id"]
+            adding_route_id = route_id
+            er0, er1 = existing_route_id.split('-')
+            ar0, ar1 = adding_route_id.split('-')
+            both_forwards = (trips[trip_id]["direction_id"] == 0 and direction_id == 0)
+            both_backwards = (trips[trip_id]["direction_id"] == 1 and direction_id == 1)
+            if (er1 == ar0 and both_forwards):
+                merged_route_id = er0 + '-' + ar1
+            elif (er0 == ar1 and both_backwards):
+                merged_route_id = ar0 + '-' + er1
+            else:
+                raise Exception("Failed to merge routes %s and %s - Duplicate trip id with non-merging routes" % (existing_route_id, adding_route_id))
+            print "Overwriting trip %s having route id %s with route id %s" % (trip_id, existing_route_id, merged_route_id)
+            stop_count = trips[trip_id]["stop_count"]
+        else:
+            merged_route_id = route_id
+            stop_count = 0
+
+        trips[trip_id] = {
+            "route_id": merged_route_id,
             "service_id": service_id,
-            "trip_id": row["Train Nos."] + service_id,
+            "trip_id": trip_id,
             "trip_headsign": "To " + [x for x in stop_names if row[x] != ""][-1],
             "trip_short_name": row["Train Nos."],
             "direction_id": direction_id,
             "block_id": None,
-            "shape_id" : None
-        })
+            "shape_id" : None,
+            "stop_count": stop_count
+        }
 
-        sequence = 0
         for stop_name in stop_names:
-            sequence += 1
+            trips[trip_id]["stop_count"] += 1
             if row[stop_name] == "":
                 continue
-            stop_times.append({
-                "trip_id": row["Train Nos."] + service_id,
-                "arrival_time": fmttime(row[stop_name]),
-                "departure_time": fmttime(row[stop_name]),
+            stop_time = fmttime(row[stop_name])
+            stop_time_hash = trip_id + '#' + stop_name
+            if stop_time_hash in stop_times:
+                if stop_time != stop_times[stop_time_hash]["departure_time"]:
+                    print "Overwriting stop_time of trip_id %s stop_name %s" % (trip_id, stop_name)
+            stop_times[stop_time_hash] = {
+                "trip_id": trip_id,
+                "arrival_time": stop_time,
+                "departure_time": stop_time,
                 "stop_name": stop_name,
-                "stop_sequence": sequence
-            })
+                "stop_sequence": trips[trip_id]["stop_count"]
+            }
 
 if __name__ == "__main__":
-    trips = []
-    stop_times = []
+    trips = {}
+    stop_times = {}
 
     stcols = [
         "trip_id", "arrival_time", "departure_time", "stop_name", "stop_sequence"
@@ -101,15 +126,33 @@ if __name__ == "__main__":
 
     stcsv = csv.DictWriter(open('stoptimes2.csv', 'w'), stcols)
     stcsv.writerow(dict([(x,x) for x in stcols])) # workaround for DictWriter.writeheader() function
-    tripcsv = csv.DictWriter(open('trips.csv', 'w'), tripcols)
+    tripcsv = csv.DictWriter(open('trips.csv', 'w'), tripcols, extrasaction = 'ignore')
     tripcsv.writerow(dict([(x,x) for x in tripcols]))
+
+    # Chennai Beach - Velachery
     unpack('msb-vlcy_sun_0')
-    unpack('msb-vlcy_sun_1')
     unpack('msb-vlcy_wds_0')
+    unpack('msb-vlcy_sun_1')
     unpack('msb-vlcy_wds_1')
+
+    # Chennai Beach - Tambaram - Chengalpet - Thirumalpur
+    unpack('msb-tbm_all_0')
     unpack('msb-tbm_sun_0')
-    unpack('msb-tbm_sun_1')
     unpack('msb-tbm_wds_0')
+    unpack('tbm-cgl_all_0')
+    unpack('tbm-cgl_sun_0')
+    unpack('tbm-cgl_wds_0')
+    #FIXME: Commented some data sources here
+    #unpack('cgl-tmlp_all_0')
+    # --- (Reverse direction)
+    #FIXME: Commented some data sources here
+    #unpack('cgl-tmlp_all_1')
+    unpack('tbm-cgl_all_1')
+    unpack('tbm-cgl_sun_1')
+    unpack('tbm-cgl_wds_1')
+    unpack('msb-tbm_all_1')
+    unpack('msb-tbm_sun_1')
     unpack('msb-tbm_wds_1')
-    tripcsv.writerows(trips)
-    stcsv.writerows(stop_times)
+
+    tripcsv.writerows(trips.values())
+    stcsv.writerows(stop_times.values())
